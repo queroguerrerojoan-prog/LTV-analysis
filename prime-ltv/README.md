@@ -182,6 +182,10 @@ Even the pessimistic case gives **LTV:CAC of 4.5**, so the channel is attractive
 
 ## How to run
 
+The analysis is implemented twice, in **Python** and in **R**, with identical methods. Run from the project root.
+
+**Python**
+
 ```bash
 git clone https://github.com/<your-username>/prime-ltv.git
 cd prime-ltv
@@ -193,18 +197,54 @@ python src/run_analysis.py
 
 This regenerates `data/members.csv`, the tables in `results/` and the charts in `figures/` (about 10 seconds). Change channel assumptions in `src/simulate.py` to explore scenarios.
 
+**R** (4.1 or later)
+
+```r
+install.packages(c("dplyr", "readr", "tidyr", "ggplot2", "scales", "patchwork"))
+```
+
+```bash
+Rscript R/run_analysis.R              # same data as Python: data/members.csv
+Rscript R/run_analysis.R --simulate   # generate fresh synthetic data in R
+```
+
+Outputs go to `results/r/` and `figures/r/`. On the shared dataset, the R and Python versions agree on every reported figure (LTV, LTV:CAC, payback, back-test) to within €0.01 and 0.01 percentage points. The only visible difference is the fitted sBG parameters for Conversational AI. That's expected: with a single renewal observed, those parameters are poorly identified, which is why the analysis reports a scenario range for that channel instead.
+
 ```
 prime-ltv/
 ├── data/members.csv          # synthetic member-level data
-├── figures/                  # charts used in this README
-├── results/                  # LTV, back-test and summary tables
-├── src/
-│   ├── simulate.py           # synthetic data generator (channel assumptions)
-│   ├── sbg.py                # sBG likelihood, fit, survival, LTV
-│   └── run_analysis.py       # end-to-end pipeline
+├── figures/                  # Python charts (figures/r/ for R)
+├── results/                  # LTV, back-test and summary tables (results/r/ for R)
+├── src/                      # Python
+│   ├── simulate.py           #   synthetic data generator (channel assumptions)
+│   ├── sbg.py                #   sBG likelihood, fit, survival, LTV
+│   └── run_analysis.py       #   end-to-end pipeline
+├── R/                        # R
+│   ├── simulate.R            #   synthetic data generator (same assumptions)
+│   ├── sbg.R                 #   sBG likelihood, fit, survival, LTV
+│   └── run_analysis.R        #   end-to-end pipeline (dplyr + ggplot2)
 ├── requirements.txt
 └── README.md
 ```
+
+The core sBG model in R is a few lines of base R:
+
+```r
+sbg_loglik <- function(log_params, renewals, churned) {
+  a <- exp(log_params[1]); b <- exp(log_params[2])
+  base <- lbeta(a, b)
+  ll_churn <- lbeta(a + 1, b + renewals) - base  # cancelled at renewal k = renewals + 1
+  ll_alive <- lbeta(a, b + renewals) - base      # still active after `renewals` renewals
+  sum(ifelse(churned, ll_churn, ll_alive))
+}
+sbg_fit      <- function(renewals, churned)
+  setNames(exp(optim(c(0, 0), function(x) -sbg_loglik(x, renewals, churned))$par), c("a", "b"))
+sbg_survival <- function(a, b, t) exp(lbeta(a, b + t) - lbeta(a, b))
+sbg_ltv      <- function(a, b, margin, years = 5, r = 0.10)
+  sum(margin * sbg_survival(a, b, 0:(years - 1)) / (1 + r)^(0:(years - 1)))
+```
+
+For production work in R, the [`CLVTools`](https://cran.r-project.org/package=CLVTools) package implements these models (and BG/NBD, Pareto/NBD, Gamma-Gamma) with covariates.
 
 ## How AI tools were used
 
