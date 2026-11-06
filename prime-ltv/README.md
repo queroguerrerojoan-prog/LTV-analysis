@@ -2,7 +2,7 @@
 
 Main goal: How much is a new member worth, which acquisition channels bring the most valuable members, and how confident can we be?
 
-This project estimates **customer lifetime value (LTV)** for an annual  membership (a Prime-style programme: members pay a yearly fee, book discounted travel while active, and decide at each anniversary whether to renew). 
+A company ask me to estimate the **customer lifetime value (LTV)** for an annual  membership (a Prime-style programme: members pay a yearly fee, book discounted travel while active, and decide at each anniversary whether to renew). 
 It models renewals with a **shifted Beta-Geometric (sBG)** model, compares LTV with acquisition cost by channel, back-tests the forecasts, and handles a new channel with very little history.
 
 
