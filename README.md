@@ -184,7 +184,7 @@ Rscript R/run_analysis.R --simulate   # generate fresh synthetic data in R
 Outputs go to `results/r/` and `figures/r/`. On the shared dataset, the R and Python versions agree on every reported figure (LTV, LTV:CAC, payback, back-test) to within €0.01 and 0.01 percentage points. The only visible difference is the fitted sBG parameters for Conversational AI. That's expected: with a single renewal observed, those parameters are poorly identified, which is why the analysis reports a scenario range for that channel instead.
 
 ```
-prime-ltv/
+LTV-analysis/
 ├── data/members.csv          # synthetic member-level data
 ├── figures/                  # Python charts (figures/r/ for R)
 ├── results/                  # LTV, back-test and summary tables (results/r/ for R)
